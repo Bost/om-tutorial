@@ -13,8 +13,14 @@
 
 (defn run-query [db q]
   (try
+    ;; (println "q" q)
+    ;; (println "db" db)
+    (println (om/db->tree (r/read-string q) db db))
     (om/db->tree (r/read-string q) db db)
-    (catch js/Error e "Invalid Query")))
+    (catch js/Error e
+      (do
+        (println "Invalid Query")
+        "Invalid Query"))))
 
 (def cm-opts
   #js {:fontSize          8
