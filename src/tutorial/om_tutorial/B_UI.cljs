@@ -127,7 +127,7 @@
   "
 
   ```
-  (defcard root-render (root {:number 52 :people [{:name \"Sam\"} {:name \"Joe\"}]}))
+  (defcard root-render (root {:number 52 :people [{:name \"Sam\"} {:name \"Jim\"} {:name \"Joe\"}]}))
   ```
 
   It is important to note that _this is exactly how the composition of UI Components always happens_, independent of
@@ -147,12 +147,13 @@
   and also try playing with editing/adding to the DOM.
   ")
 
-(defcard root-render (root {:number 52 :people [{:name "Sam"} {:name "Joe"}]}))
+(defcard root-render (root {:number 52 :people [{:name "Sam"} {:name "Jim"} {:name "Joe"}]}))
 
 (defui Root-computed
   Object
   (render [this]
     (let [{:keys [people number b]} (om/props this)
+          ;; Look-up for computed properties using om/get-computed
           {:keys [incHandler boolHandler]} (om/get-computed this)]
       (dom/div nil
         ; code pprinter cannot deal with #js on rendering source. Using clj->js instead
@@ -204,7 +205,9 @@
           sideband-data {:incHandler  (fn [] (swap! data-atom-from-devcards update-in [:number] inc))
                          :boolHandler (fn [] (swap! data-atom-from-devcards update-in [:b] not))}
           ]
-      (root-computed (om/computed prop-data sideband-data))))
+      (root-computed
+       ;; Attach computed properties to props using om/computed:
+       (om/computed prop-data sideband-data))))
   {:number 42 :people [{:name "Sally"}] :b false}
   {:inspect-data true
    :history      true})

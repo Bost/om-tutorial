@@ -69,22 +69,36 @@
 (declare om-person)
 
 (defui Person
-  Object
-  (initLocalState [this] {})                                ;; TODO (ex 3): Add initial local state here
-
+  Object (initLocalState [this] {:checked true})
   (render [this]
-    ; TODO: (ex 4) obtain the 'computed' onDelete handler
-    (let [name "name"                                       ;; TODO (ex 1): Get the Om properties from this
-          mate nil
-          checked false]                                    ;; TODO (ex 3): component local state
+    (let [{:keys [person/name person/mate]} (om/props this)
+          {:keys [checked]} (om/get-state this)
+          ;; obtain the 'computed' onDelete handler
+          {:keys [onDelete]} (om/get-computed this)]
       (dom/li nil
         (dom/input #js {:type    "checkbox"
-                        :onClick (fn [e] (println "TODO ex 3"))
-                        :checked false                      ; TODO: ex-3: modify local state
+                        :onClick
+                        (fn [e]
+                          ;; Both set-state! and update-state! works
+
+                          ;; Set component local state.
+                          ;; Will schedule the component for re-render.
+                          (om.next/set-state! this {:checked (not checked)})
+
+                          ;; Update a component's local state.
+                          ;; Similar to Clojure(Script)'s swap!.
+                          #_(om.next/update-state!
+                             this update :checked (fn [] (not checked))))
+                        :checked checked
                         })
-        (dom/span nil name)                                 ; TODO: ex 3. Make name bold when checked
-        (dom/button nil "X")                                ; TODO: (ex 4) call onDelete handler, if present
-        (when mate (dom/ul nil (om-person mate)))))))
+        (dom/span #js {:style #js {:fontWeight (if checked "bold" "normal")}}
+         name)
+        (dom/button (clj->js {:onClick
+                              (fn [e]
+                                ;; call onDelete handler, if present
+                                (if onDelete
+                                  (onDelete name)))}) "X")
+        (when mate (dom/ul nil (om-person (om/computed mate {:onDelete onDelete}))))))))
 
 (def om-person (om/factory Person))
 
@@ -106,26 +120,28 @@
 
 (defui PeopleWidget
   Object
-  (render [this]
-    ; TODO: (ex 4): Create a deletePerson function
-    (let [people []]                                        ; TODO (ex 2): Get yo stuff
+  (render
+   [this]
+   (let [{:keys [people]} (om/props this)
+         ;; Create a deletePerson function
+         deletePerson (fn [p] (println "delete p:" p))]
       (dom/div nil
         (if (= nil people)
           (dom/span nil "Loading...")
           (dom/div nil
             (dom/button #js {} "Save")
             (dom/button #js {} "Refresh List")
-            ; TODO: (ex 4) pass deletePerson as the onDelete handler to person element
-            (dom/ul nil (map #(om-person %) people))))))))
+            ;; pass deletePerson as the onDelete handler to person element
+            (dom/ul nil (map #(om-person
+                               (om/computed % {:onDelete deletePerson}))
+                             people))))))))
 
 (def people-widget (om/factory PeopleWidget))
 
 (defui Root
   Object
   (render [this]
-    (let [widget nil
-          new-person nil
-          last-error nil]                                   ; TODO (ex 2): Get yo stuff
+    (let [{:keys [widget new-person last-error]} (om/props this)]
       (dom/div nil
         (dom/div nil (when (not= "" last-error) (str "Error " last-error)))
         (dom/div nil
