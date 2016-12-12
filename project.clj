@@ -1,12 +1,12 @@
 (defproject om-tutorial "0.1.0-SNAPSHOT"
   :description "A Tutorial for Om 1.0.0 (next)"
-  :dependencies [[org.clojure/clojure "1.7.0" :scope "provided"]
-                 [org.clojure/clojurescript "1.7.170" :scope "provided"]
-                 [devcards "0.2.1-2" :exclusions [org.omcljs/om cljsjs/react-dom org.clojure/tools.reader cljsjs/react]]
-                 [datascript "0.13.3"]
-                 [org.omcljs/om "1.0.0-alpha26"]
-                 [figwheel-sidecar "0.5.0-3" :exclusions [clj-time joda-time org.clojure/tools.reader] :scope "test"]
-                 [cljsjs/codemirror "5.8.0-0"]]
+  :dependencies [[org.clojure/clojure "1.8.0" :scope "provided"]
+                 [org.clojure/clojurescript "1.9.293" :scope "provided"]
+                 [devcards "0.2.2" :exclusions [org.omcljs/om cljsjs/react-dom org.clojure/tools.reader cljsjs/react]]
+                 [datascript "0.15.5"]
+                 [org.omcljs/om "1.0.0-alpha47"]
+                 [figwheel-sidecar "0.5.8" :exclusions [clj-time joda-time org.clojure/tools.reader] :scope "test"]
+                 [cljsjs/codemirror "5.21.0-1"]]
 
   :source-paths ["src/main" "src/cards" "src/tutorial"]
 
@@ -14,14 +14,18 @@
 
   :clean-targets ^{:protect false} ["resources/public/js" "resources/public/cards" "resources/public/tutorial" "target"]
 
-  :figwheel {:build-ids   ["dev" "cards" "tutorial"]
+  :figwheel {
+             ;; Access figwheel server from outside of VM:
+             ;; the 'Figwheel: Starting server at http://localhost:3448' is misleading
+             :server-ip "10.90.20.167" ; see :websocket-host
+             :build-ids   ["dev" "cards" "tutorial"]
              :server-port 3450}
 
   :cljsbuild {
               :builds
               [
                {:id           "dev"
-                :figwheel     true
+                :figwheel     {:websocket-host :js-client-host} #_true
                 :source-paths ["src/main"]
                 :compiler     {:main                 om-tutorial.core
                                :asset-path           "js"
@@ -31,7 +35,8 @@
                                :parallel-build       true
                                :verbose              false}}
                {:id           "cards"
-                :figwheel     {:devcards true}
+                :figwheel     {:devcards true
+                               :websocket-host :js-client-host}
                 :source-paths ["src/main" "src/cards"]
                 :compiler     {
                                :main                 om-tutorial.cards
@@ -43,7 +48,8 @@
                                :parallel-build       true
                                :verbose              false}}
                {:id           "tutorial"
-                :figwheel     {:devcards true}
+                :figwheel     {:devcards true
+                               :websocket-host :js-client-host}
                 :source-paths ["src/main" "src/tutorial"]
                 :compiler     {
                                :main                 om-tutorial.tutorial
@@ -80,8 +86,13 @@
 
   :profiles {
              :dev {:source-paths ["src/dev" "src/main" "src/tutorial"]
-                   :dependencies [[com.cemerick/piggieback "0.2.1"]
-                                  [org.clojure/tools.nrepl "0.2.12"]]
+                   :dependencies [[figwheel-sidecar "0.5.8"
+                                   :exclusions [org.clojure/tools.analyzer
+                                                org.clojure/tools.analyzer.jvm]]
+                                  [com.cemerick/piggieback "0.2.1"]
+                                  ;; 0.2.13-SNAPSHOT fixes:
+                                  ;; Unable to resolve var: cemerick.piggieback/wrap-cljs-repl in this context
+                                  [org.clojure/tools.nrepl "0.2.13-SNAPSHOT"]]
                    :repl-options {:init-ns user
                                   :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]
                                   :port    7001}
